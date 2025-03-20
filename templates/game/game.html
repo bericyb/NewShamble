@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link href="/assets/output.css" rel="stylesheet" />
+	<script src="/assets/htmx.min.js"></script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900">
+	<div id="main">
+		<div class="flex flex-col items-center justify-center h-60">
+			<h1>Best 2 out of 3</h1>
+			<h2>Fight to the death</h2>
+			<p id="connectionStatus">{{ .ConnectionStatus }}</p>
+			<div class="flex space-x-4 rtl:space-x-reverse hidden">
+				<button class="btn btn-default" href="/match/{{ .MatchID }}/rock">🪨 Rock</button>
+				<button class="btn btn-yellow" href="/match/{{ .MatchID }}/paper">📄 Paper</button>
+				<button class="btn btn-red" href="/match/{{ .MatchID }}/scissors">✂️ Scissors</button>
+			</div>
+		</div>
+	</div>
+	<script src="/assets/flowbite.min.js"></script>
+</body>
+
+</html>

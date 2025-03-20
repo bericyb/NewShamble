@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/assets/output.css" rel="stylesheet" />
+    <script src="/assets/htmx.min.js"></script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="main">
+        <div class="flex flex-col items-center justify-center h-60 mt-12">
+            <h1
+                class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+                Roshamble
+            </h1>
+            <p>{{ .Error }}</p>
+            <p>{{ .CurrentPlayers }} Players Online</p>
+            <div class="flex flex-row justify-between max-w-md">
+                <a class="btn btn-default" href="/queue/quickplay">Quickplay</a>
+                <a class="btn btn-yellow" href="/queue/ranked">Ranked</a>
+                <a class="btn btn-red" href="/queue/tournament">Tournament</a>
+            </div>
+            <div class="mt-12">
+                <a class="btn btn-alternative" href="/dashboard">Back</a>
+            </div>
+        </div>
+    </div>
+    <script src="/assets/flowbite.min.js"></script>
+</body>
+
+</html>

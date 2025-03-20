@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/assets/output.css" rel="stylesheet" />
+    <script src="/assets/htmx.min.js"></script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="main" hx-get="/decline-match" hx-trigger="every 14s" class="flex flex-col items-center justify-center h-60">
+        <h1> Match Ready! </h1>
+        <h2>
+            {{ .Player1.Username }} VS {{ .Player2.Username }}
+        </h2>
+        <p>Accept in the next 15 seconds or you will be removed from the queue.</p>
+        <div class="flex space-x-4 rtl:space-x-reverse">
+            <a class="btn btn-green" href="/match/{{ .MatchID }}">Accept</a>
+            <a class="btn btn-red" href="/play">Decline</a>
+        </div>
+    </div>
+    <script src="/assets/flowbite.min.js"></script>
+</body>
+
+</html>

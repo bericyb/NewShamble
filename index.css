@@ -1,0 +1,178 @@
+@import "tailwindcss";
+@import "flowbite/src/themes/default";
+@plugin "flowbite/plugin";
+@source "./node_modules/flowbite";
+
+@theme {
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
+
+    --font-sans: "Inter", "ui-sans-serif", "system-ui", "-apple-system",
+        "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial",
+        "Noto Sans", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+    --font-body: "Inter", "ui-sans-serif", "system-ui", "-apple-system",
+        "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial",
+        "Noto Sans", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: "ui-monospace", "SFMono-Regular", "Menlo", "Monaco",
+        "Consolas", "Liberation Mono", "Courier New", "monospace";
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 dark:bg-gray-900
+}
+/* ========== Typography ========== */
+h1 {
+  @apply text-5xl font-extrabold dark:text-white;
+}
+
+h2 {
+  @apply text-4xl font-bold dark:text-white;
+}
+
+h3 {
+  @apply text-3xl font-bold dark:text-white;
+}
+
+h4 {
+  @apply text-2xl font-bold dark:text-white;
+}
+
+h5 {
+  @apply text-xl font-bold dark:text-white;
+}
+
+h6 {
+  @apply text-lg font-bold dark:text-white;
+}
+
+p {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+p.leading {
+  @apply mb-3 text-lg md:text-xl text-gray-500 dark:text-gray-400;
+}
+
+/* Make <a> elements look like buttons */
+a.btn {
+  @apply inline-block text-center no-underline;
+}
+
+/* Base button styles */
+.btn {
+  @apply font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none m-2 inline-flex items-center justify-center;
+}
+
+/* Default Button */
+.btn-default, a.btn-default {
+  @apply text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
+}
+
+/* Alternative Button */
+.btn-alternative, a.btn-alternative {
+  @apply text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+}
+
+/* Dark Button */
+.btn-dark, a.btn-dark {
+  @apply text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700;
+}
+
+/* Light Button */
+.btn-light, a.btn-light {
+  @apply text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;
+}
+
+/* Green Button */
+.btn-green, a.btn-green {
+  @apply text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800;
+}
+
+/* Red Button */
+.btn-red, a.btn-red {
+  @apply text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900;
+}
+
+/* Yellow Button */
+.btn-yellow, a.btn-yellow {
+  @apply text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 dark:focus:ring-yellow-900;
+}
+
+/* Purple Button */
+.btn-purple, a.btn-purple {
+  @apply text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900;
+}
+
+/* Base Input Styles */
+.input {
+  @apply w-full p-2.5 text-sm rounded-lg border bg-gray-50 text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+}
+
+/* Success Input */
+.input-success {
+  @apply bg-green-50 border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500;
+}
+
+/* Error Input */
+.input-error {
+  @apply bg-red-50 border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500;
+}
+
+/* File Input */
+.input-file {
+  @apply block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400;
+}
+
+/* Dropzone Input */
+.input-dropzone {
+  @apply flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:hover:border-gray-500;
+}
+
+/* Number Input */
+.input-number {
+  @apply text-center bg-gray-50 border border-gray-300 h-11 w-full text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+}
+
+/* Select Input */
+.input-select {
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+}
+
+/* Textarea Input */
+.input-textarea {
+  @apply block p-2.5 w-full text-sm bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+}
+
+/* Checkbox Input */
+.input-checkbox {
+  @apply w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600;
+}
+
+/* Radio Input */
+.input-radio {
+  @apply w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600;
+}
+
+/* Toggle Input */
+.input-toggle {
+  @apply relative w-11 h-6 bg-gray-200 rounded-full dark:bg-gray-700;
+}
+
+/* Range Slider */
+.input-range {
+  @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700;
+}
