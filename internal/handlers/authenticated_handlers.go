@@ -1,17 +1,17 @@
 package handlers
 
 import (
-	"Roshamble/internal/game"
 	"Roshamble/internal/services"
-	"database/sql"
+	"Roshamble/internal/tournament"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	"github.com/gorilla/websocket"
 )
 
 func getClaims(c *gin.Context) (services.Claims, error) {
@@ -29,248 +29,252 @@ func getClaims(c *gin.Context) (services.Claims, error) {
 	structClaims := services.Claims{
 		ID:       claims["id"].(string),
 		Username: claims["username"].(string),
-		Email:    claims["email"].(string),
 	}
 	return structClaims, nil
 }
 
 func (h *Handler) GetDashboard(c *gin.Context) {
-	c.HTML(http.StatusOK, "dashboard.html", gin.H{})
+	claims, err := getClaims(c)
+	if err != nil {
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	tournamentData := services.TournamentData{}
+
+	tournamentData, err = services.GetTournamentData(c, h.DB, claims)
+	if err != nil {
+		slog.Error("Error getting tournament data", "error", err)
+	}
+
+	slog.Info("open tournament", "openID", tournamentData.OpenTournament.ID)
+	slog.Info("ongoing tournament", "ongoing", tournamentData.OngoingTournament.ID)
+
+	c.HTML(http.StatusOK, "dashboard.html", gin.H{"Claims": claims, "OpenTournament": tournamentData.OpenTournament, "OpenTournamentCountDown": "30 seconds", "OngoingTournament": tournamentData.OngoingTournament, "LastTournamentDate": tournamentData.LastTournament.GetDateTimeString(), "UpcomingTournaments": tournamentData.UpcomingTournaments})
+}
+
+func (h *Handler) GetPastTournaments(c *gin.Context) {
+	var pastTournaments []services.Tournament
+
+	pastTournaments, err := services.GetPastTournaments(c, h.DB)
+	if err != nil {
+		slog.Error("Error getting past tournament data", "error", err)
+	}
+	slog.Info("Tournament data ", "past tourney", pastTournaments)
+
+	c.HTML(http.StatusOK, "halloffame.html", gin.H{"Tournaments": pastTournaments})
+}
+
+func (h *Handler) GetProfile(c *gin.Context) {
+	claims, err := getClaims(c)
+	if err != nil || claims.ID == "" {
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	p, err := services.GetUserProfile(c, h.DB, claims.ID)
+	if err != nil {
+		slog.Error("Error getting user notification settings", "error", err)
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
+
+	c.HTML(http.StatusOK, "profile.html", gin.H{"Username": p.Username, "Email": p.Email, "NewTournaments": p.NewTournamentsNotif, "FriendsJoined": p.FriendsJoinedNotif, "TournamentStarting": p.TournamentStartingNotif})
+	return
+}
+
+func (h *Handler) UpdateProfile(c *gin.Context) {
+	claims, err := getClaims(c)
+	if err != nil {
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
+		return
+	}
+
+	message, errorMessage := services.UpdateUserProfile(c, h.DB, claims)
+	c.HTML(http.StatusOK, "profile.html", gin.H{"Message": message, "ErrorMessage": errorMessage})
+	return
 }
 
 func (h *Handler) GetPlay(c *gin.Context) {
-	currentPlayers := 0
-
-	row := h.DB.QueryRow("SELECT (SELECT COUNT(*) FROM quickplay_queue) + (SELECT COUNT(*) FROM ranked_queue) + (SELECT COUNT(*) FROM tournament_queue)")
-
-	err := row.Scan(&currentPlayers)
+	_, err := getClaims(c)
 	if err != nil {
-		slog.Error("Error querying for total online count", "error", err)
-	}
-
-	c.HTML(http.StatusOK, "play.html", gin.H{"CurrentPlayers": currentPlayers})
-}
-
-func (h *Handler) DeclineMatch(c *gin.Context) {
-
-	userData, err := getClaims(c)
-	if err == nil {
-		_, err := h.DB.Exec("DELETE FROM quickplay_queue WHERE user_id = $1", userData.ID)
-		if err != nil {
-			slog.Error("Error updating removing player from queue", "error", err)
-		}
-	}
-
-	c.Header("HX-Location", "/play")
-	c.HTML(http.StatusOK, "redirector", gin.H{"Title": "Matchmaking Failed", "Message": "You have declined the match."})
-}
-
-func (h *Handler) GetQueue(c *gin.Context) {
-	// Capitalize the mode for display purposes
-	mode := c.Param("mode")
-	if mode == "" {
-		c.Redirect(http.StatusFound, "/play")
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
-	formattedMode := cases.Title(language.English).String(mode)
-
-	userData, err := getClaims(c)
+	dbT, err := services.GetTournament(c, h.DB)
 	if err != nil {
-		c.Redirect(http.StatusUnauthorized, "index.html")
+		slog.Error("Error getting tournament data", "error", err)
+	}
+
+	if dbT.ID == 0 {
+		slog.Error("Error getting tournament data", "error", "tournament not found")
 		return
 	}
 
-	currentPlayers := 1
-	// insert the player into the respective queue and return the queue size for current players
-	if mode == "quickplay" {
-		// Insert the user into the quickplay queue with their ID
-		_, err = h.DB.Exec("INSERT INTO quickplay_queue (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET queued_at = NOW(), match_id = NULL, matched_at = NULL", userData.ID)
-		if err != nil {
-			slog.Error("Error inserting into quickplay queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
+	// Initialize tournament if it doesn't exist
+	st, ok := h.Tournaments.Load(dbT.ID)
+	if !ok {
+		slog.Info("Tournament not found in memory, creating new tournament")
+		st = tournament.NewTournament(dbT.ID)
+		h.Tournaments.Store(dbT.ID, st)
+		st, ok = h.Tournaments.Load(dbT.ID)
+		if !ok {
+			slog.Error("Error storing new tournament in memory")
 			return
 		}
-		row := h.DB.QueryRow("SELECT COUNT(*) FROM quickplay_queue")
-		err = row.Scan(&currentPlayers)
-		if err != nil {
-			slog.Error("Error querying quickplay queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
-			return
-		}
-	} else if mode == "ranked" {
-		_, err = h.DB.Exec("INSERT INTO ranked_queue (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET queued_at = NOW(), match_id = NULL, matched_at = NULL", userData.ID)
-		if err != nil {
-			slog.Error("Error inserting into ranked queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
-			return
-		}
-		row := h.DB.QueryRow("SELECT COUNT(*) FROM ranked_queue")
-		err = row.Scan(&currentPlayers)
-		if err != nil {
-			slog.Error("Error querying ranked queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
-			return
-		}
-	} else if mode == "tournament" {
-		_, err = h.DB.Exec("INSERT INTO tournament_queue (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET queued_at = NOW(), match_id = NULL, matched_at = NULL", userData.ID)
-		if err != nil {
-			slog.Error("Error inserting into tournament queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
-			return
-		}
-		row := h.DB.QueryRow("SELECT COUNT(*) FROM tournament_queue")
-		err = row.Scan(&currentPlayers)
-		if err != nil {
-			slog.Error("Error querying tournament queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Database error"})
-			return
-		}
-	} else {
-		slog.Error("Invalid game mode")
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Invalid game mode"})
-		return
 	}
 
-	c.HTML(http.StatusOK, "queue.html", gin.H{"Mode": c.Param("mode"), "formattedMode": formattedMode, "CurrentPlayers": currentPlayers, "PlayerID": userData.ID})
+	c.HTML(http.StatusOK, "play.html", gin.H{"Error": "", "Countdown": "", "InviteLink": "", "Tournament": dbT})
 }
 
-func (h *Handler) GetQueueStatus(c *gin.Context) {
-	mode := c.Param("mode")
-	if mode == "" {
-		c.Redirect(http.StatusFound, "/play")
+func (h *Handler) LeaveTournament(c *gin.Context) {
+	claims, err := getClaims(c)
+	if err != nil {
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
+	}
+
+	tIDStr := c.Param("tournamentID")
+	tID, err := strconv.Atoi(tIDStr)
+	if err != nil {
+		slog.Error("Error parsing tournamentID from url param", "error", err.Error())
+	}
+
+	err = services.RemoveTournamentPlayer(c, h.DB, tID, claims)
+	if err != nil {
+		slog.Error("Error removing player from tournament", "error", err.Error())
+	}
+	c.HTML(http.StatusOK, "redirector.html", gin.H{"Title": "Leaving tournament", "Message": "You may join again before the tournament starts"})
+}
+
+var upgrader = websocket.Upgrader{
+	Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+		slog.Error("TODO: Fix ws error hanlding", "status", status, "reason", reason)
+	},
+	CheckOrigin: func(r *http.Request) bool {
+		// TODO: Add origin check
+		return true
+	},
+	EnableCompression: false,
+}
+
+func (h *Handler) WsHandler(c *gin.Context) {
+
+	claims, err := getClaims(c)
+	if err != nil {
+		slog.Error("Error getting claims", "error", err)
+		c.Redirect(http.StatusFound, "/auth/login")
 		return
 	}
 
-	var currentStatus string
-	var matchID sql.NullString
-	if mode == "quickplay" {
-		// Check if the player has a game ready
-		row := h.DB.QueryRow("SELECT match_id FROM quickplay_queue WHERE user_id = $1", c.Param("playerID"))
-		err := row.Scan(&matchID)
+	tournamentID := c.Param("tournamentID")
+	if tournamentID == "" {
+		slog.Error("Error getting tournament ID from url param")
+		return
+	}
 
-		if err != nil {
-			slog.Error("Error querying quickplay queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Matchmaking error. Please leave and try again..."})
-			return
-		}
-		// If the player has a game, render the match_ready page
-		if matchID.Valid {
-			rows, err := h.DB.Query("SELECT users.id, users.username FROM quickplay_queue JOIN users on users.id = quickplay_queue.user_id WHERE quickplay_queue.match_id = $1", matchID.String)
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	defer conn.Close()
+	if err != nil {
+		slog.Error("Error upgrading websocket connection", "error", err)
+		return
+	}
+	slog.Info("Websocket connection established")
+
+	tID, err := strconv.Atoi(tournamentID)
+	if err != nil {
+		slog.Error("Error parsing tournamentID from url param", "error", err.Error())
+		return
+	}
+	st, ok := h.Tournaments.Load(tID)
+	if !ok {
+		slog.Error("Tournament not found...")
+		return
+	}
+
+	recvChan := make(chan tournament.GameResponse)
+	player := tournament.Player{
+		Username: claims.Username,
+		MsgChan:  recvChan,
+		WinCount: 0,
+	}
+
+	t := st.(*tournament.Tournament)
+	t.CommandChan <- tournament.GameCommand{
+		Username: claims.Username,
+		Command:  "join",
+		Payload:  &player,
+	}
+	slog.Info("Player joined tournament", "username", player.Username)
+
+	var data map[string]any
+
+	go func() {
+		for {
+			msg := []byte{}
+			select {
+			case cmd := <-recvChan:
+				switch cmd.Command {
+				case "gameWon":
+					msg = []byte(fmt.Sprintf("You won the game! %s", cmd.Payload))
+
+				case "gameLost":
+					msg = []byte(fmt.Sprintf("You lost the game! %s", cmd.Payload))
+
+				case "gameDraw":
+					msg = []byte(fmt.Sprintf("The game ended in a draw! %s", cmd.Payload))
+
+				case "moveAccepted":
+					msg = []byte(fmt.Sprintf("Your move was accepted! %s Waiting for other player...", cmd.Payload))
+
+				case "gameStarted":
+					msg = []byte(fmt.Sprintf("The game has started! GameID: %s", cmd.Payload))
+
+				case "gameEnded":
+					msg = []byte(fmt.Sprintf("The game has ended! %s", cmd.Payload))
+				case "tournamentEnded":
+					msg = []byte(fmt.Sprintf("The tournament has ended! %s is the winner!", cmd.Payload))
+
+				default:
+					slog.Error("Unknown command received from tournament", "command", cmd.Command)
+				}
+			}
+			err = conn.WriteMessage(websocket.BinaryMessage, msg)
 			if err != nil {
-				slog.Error("Error querying for match users' usernames", "match_id", matchID.String)
-				slog.Error(err.Error())
-				c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Matchmaking error. Please leave and try again..."})
+				slog.Error("Error writing message", "error", err)
 				return
 			}
+		}
+	}()
 
-			players := []game.Player{}
-			for rows.Next() {
-				var username string
-				var user_id string
-				if err := rows.Scan(&user_id, &username); err != nil {
-					slog.Error("Error scanning username or id")
-					slog.Error(err.Error())
-					c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Matchmaking error. Please leave and try again..."})
-					return
-				}
-				players = append(players, game.Player{UserID: user_id, Username: username})
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			slog.Error("Error reading message", "error", err)
+			return
+		}
+		slog.Info("Message received", "message", string(msg))
+
+		err = json.Unmarshal(msg, &data)
+		if err != nil {
+			slog.Error("Error unmarshalling message", "error", err)
+			return
+		}
+
+		if move, ok := data["move"].(string); ok {
+			slog.Info("Move received", "move", move)
+			t.CommandChan <- tournament.GameCommand{
+				Username: claims.Username,
+				Command:  "move",
+				Payload:  move,
 			}
 
-			c.HTML(http.StatusOK, "match_ready.html", gin.H{"MatchReady": true, "Player1": players[0], "Player2": players[1], "MatchID": matchID.String})
-			return
 		}
-	} else if mode == "ranked" {
-		// Check if the player has a game ready
-		row := h.DB.QueryRow("SELECT status, match_id FROM ranked_queue WHERE user_id = $1", c.Param("playerID"))
-		err := row.Scan(&currentStatus, &matchID)
-		if err != nil {
-			slog.Error("Error querying ranked queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Matchmaking error. Please leave and try again..."})
-			return
-		}
-		// If the player has a game, render the match_ready page
-		if currentStatus != "pending" {
-			c.HTML(http.StatusOK, "match_ready.html", gin.H{"MatchReady": true, "PlayerID": c.Param("playerID"), "MatchID": matchID})
-			return
-		}
-	} else if mode == "tournament" {
-		// Check if the player has a game ready
-		row := h.DB.QueryRow("SELECT status, match_id FROM tournament_queue WHERE user_id = $1", c.Param("playerID"))
-		err := row.Scan(&currentStatus, &matchID)
-		if err != nil {
-			slog.Error("Error querying tournament queue")
-			slog.Error(err.Error())
-			c.HTML(http.StatusInternalServerError, "play.html", gin.H{"error": "Matchmaking error. Please leave and try again..."})
-			return
-		}
-		// If the player has a game, render the match_ready page
-		if currentStatus != "pending" {
-			c.HTML(http.StatusOK, "match_ready.html", gin.H{"MatchReady": true, "PlayerID": c.Param("playerID"), "MatchID": matchID})
-			return
-		}
-	} else {
-		slog.Error("Invalid game mode")
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Invalid game mode"})
-		return
+
 	}
-
-	c.JSON(http.StatusNotFound, gin.H{})
-}
-
-func (h *Handler) DeletePlayerFromQueue(c *gin.Context) {
-	userData, err := getClaims(c) // Ensure claims are retrieved to validate user
-	if err != nil {
-		c.Redirect(http.StatusUnauthorized, "index.html")
-		return
-	}
-
-	if userData.ID != c.Param("playerID") {
-		c.Redirect(http.StatusUnauthorized, "index.html")
-		return
-	}
-
-	mode := c.Param("mode")
-	if mode == "quickplay" {
-		_, err = h.DB.Exec("DELETE FROM quickplay_queue WHERE user_id = $1", userData.ID)
-	} else if mode == "ranked" {
-		_, err = h.DB.Exec("DELETE FROM ranked_queue WHERE user_id = $1", userData.ID)
-	} else if mode == "tournament" {
-		_, err = h.DB.Exec("DELETE FROM tournament_queue WHERE user_id = $1", userData.ID)
-	} else {
-		slog.Error("Invalid game mode")
-		c.HTML(http.StatusBadRequest, "redirector", gin.H{"error": "Invalid game mode", "URL": "/play"})
-		return
-	}
-
-	c.Header("HX-Location", "/play")
-	c.HTML(http.StatusOK, "play.html", gin.H{"message": "You have been removed from the queue."})
-}
-
-func (h *Handler) GetMatch(c *gin.Context) {
-	matchID := c.Param("gameID")
-	if matchID == "" {
-		c.HTML(http.StatusBadRequest, "redirector", gin.H{"Message": "Invalid game ID", "URL": "/play"})
-		return
-	}
-
-	// row := h.DB.QueryRow("SELECT * FROM matches WHERE id = $1", matchID)
-	// var match game.Match
-	// err := row.Scan(&match.ID, &match.Player1, &match.Player2, &match.Winner)
-	// if err != nil {
-	// 	slog.Error("Error querying match")
-	// 	slog.Error(err.Error())
-	// 	c.HTML(http.StatusInternalServerError, "redirector", gin.H{"Message": "Match not found", "URL": "/play"})
-	// 	return
-	// }
-
-	c.HTML(http.StatusOK, "game.html", gin.H{"Match": matchID})
 }

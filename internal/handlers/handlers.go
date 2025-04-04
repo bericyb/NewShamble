@@ -1,24 +1,18 @@
 package handlers
 
 import (
-	"Roshamble/internal/game"
 	"Roshamble/internal/services"
 	"database/sql"
+	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	DB    *sql.DB
-	Games map[string]game.Game
-}
-
-func (h *Handler) Root(c *gin.Context) {
-	if cookie, err := c.Cookie("Authorization"); err != nil && cookie != "" {
-		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
-	}
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	DB          *sql.DB
+	Tournaments sync.Map // map[int]*tournament.Tournament
 }
 
 func (h *Handler) Empty(c *gin.Context) {
@@ -28,37 +22,31 @@ func (h *Handler) Empty(c *gin.Context) {
 func (h *Handler) GetLogin(c *gin.Context) {
 	if cookie, err := c.Cookie("Authorization"); err != nil && cookie != "" {
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
+		return
 	}
 	c.HTML(http.StatusOK, "login.html", gin.H{})
+	return
+}
+
+func (h *Handler) TriggerOTP(c *gin.Context) {
+	phone, message, errMessage := services.TriggerOTP(c, h.DB)
+	if errMessage != "" {
+		c.HTML(http.StatusOK, "login.html", gin.H{"message": errMessage})
+		return
+	}
+	c.HTML(http.StatusOK, "otp.html", gin.H{"Message": message, "Phone": phone})
 }
 
 func (h *Handler) Login(c *gin.Context) {
-	token, errMessage := services.LoginUser(c, h.DB)
+	token, errMessage := services.VerifyUser(c, h.DB)
+	slog.Info("User logged in", "token", token, "errMessage", errMessage)
 	if errMessage != "" {
-		c.HTML(http.StatusOK, "login.html", gin.H{"message": errMessage})
+		c.HTML(http.StatusOK, "login.html", gin.H{"Error": errMessage})
+		return
 	}
 
 	c.SetCookie("Authorization", token, 3600*24*365, "/", "", false, true)
-	c.Header("HX-Redirect", "/dashboard")
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-func (h *Handler) GetRegister(c *gin.Context) {
-	if cookie, err := c.Cookie("Authorization"); err != nil && cookie != "" {
-		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
-	}
-	c.HTML(http.StatusOK, "register.html", gin.H{})
-}
-
-func (h *Handler) Register(c *gin.Context) {
-	token, err := services.RegisterUser(c, h.DB)
-	if err != "" {
-		c.HTML(http.StatusOK, "register.html", gin.H{"message": err})
-	}
-
-	c.SetCookie("Authorization", token, 3600*24*365, "/", "", false, true)
-	c.Header("HX-Redirect", "/dashboard")
-	c.JSON(http.StatusOK, gin.H{})
+	c.Header("HX-Redirect", "/")
 }
 
 func (h *Handler) Logout(c *gin.Context) {

@@ -1,19 +1,20 @@
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
+@import "tailwindcss/preflight"
 @plugin "flowbite/plugin";
 @source "./node_modules/flowbite";
 
 @theme {
-    --color-primary-50: #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
+    --color-primary-50: #ffffff;
+    --color-primary-100: #ffffff;
+    --color-primary-200: #ffffff;
+    --color-primary-300: #ffffff;
+    --color-primary-400: #ffffff;
+    --color-primary-500: #ffffff;
+    --color-primary-600: #ffffff;
+    --color-primary-700: #ffffff;
+    --color-primary-800: #ffffff;
+    --color-primary-900: #ffffff;
 
     --font-sans: "Inter", "ui-sans-serif", "system-ui", "-apple-system",
         "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial",
@@ -27,12 +28,8 @@
         "Consolas", "Liberation Mono", "Courier New", "monospace";
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 body {
-  @apply bg-gray-50 dark:bg-gray-900
+  @apply bg-neutral-50 dark:bg-black
 }
 /* ========== Typography ========== */
 h1 {
@@ -60,41 +57,49 @@ h6 {
 }
 
 p {
-  @apply text-gray-500 dark:text-gray-400;
+  @apply text-white;
 }
 
-p.leading {
-  @apply mb-3 text-lg md:text-xl text-gray-500 dark:text-gray-400;
+p.thin {
+  @apply text-xs text-neutral-400 font-light;
+}
+
+p.error {
+  @apply text-red-500 dark:text-red-400;
+}
+
+a {
+  @apply text-primary-600 hover:text-primary-700 focus:ring-4 focus:ring-primary-300 dark:text-primary-500 dark:hover:text-primary-400 dark:focus:ring-primary-800;
 }
 
 /* Make <a> elements look like buttons */
 a.btn {
-  @apply inline-block text-center no-underline;
+  @apply inline-block text-center no-underline text-neutral-500 dark:text-neutral-400;
 }
 
 /* Base button styles */
 .btn {
-  @apply font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none m-2 inline-flex items-center justify-center;
+  @apply font-medium rounded-lg text-sm px-5 py-4 focus:outline-none inline-flex items-center justify-center;
 }
 
 /* Default Button */
 .btn-default, a.btn-default {
-  @apply text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
+  @apply text-black bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
 }
 
 /* Alternative Button */
 .btn-alternative, a.btn-alternative {
-  @apply text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+  @apply text-white border-white focus:ring-4 focus:ring-white hover:text-white border-solid border-[1px];
 }
 
 /* Dark Button */
 .btn-dark, a.btn-dark {
-  @apply text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700;
+  @apply text-white bg-neutral-800 hover:bg-neutral-900 focus:ring-4 focus:ring-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:focus:ring-neutral-700 dark:border-neutral-700;
 }
 
 /* Light Button */
 .btn-light, a.btn-light {
-  @apply text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;
+  @apply text-neutral-900 bg-white border border-neutral-300 hover:bg-neutral-100 focus:ring-4 focus:ring-neutral-100 dark:bg-neutral-800 dark:text-white dark:border-neutral-600 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-neutral-700;
 }
 
 /* Green Button */
@@ -119,60 +124,62 @@ a.btn {
 
 /* Base Input Styles */
 .input {
-  @apply w-full p-2.5 text-sm rounded-lg border bg-gray-50 text-gray-900 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+  @apply w-full p-2.5 text-sm rounded-lg border bg-neutral-50 text-neutral-900 border-neutral-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
 }
 
 /* Success Input */
 .input-success {
-  @apply bg-green-50 border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500;
+  @apply bg-green-50 border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500 dark:bg-neutral-700 dark:border-green-500;
 }
 
 /* Error Input */
 .input-error {
-  @apply bg-red-50 border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500;
+  @apply bg-red-50 border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 dark:bg-neutral-700 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500;
 }
 
 /* File Input */
 .input-file {
-  @apply block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400;
+  @apply block w-full text-sm text-neutral-900 border border-neutral-300 rounded-lg cursor-pointer bg-neutral-50 focus:outline-none dark:text-neutral-400 dark:bg-neutral-700 dark:border-neutral-600 dark:placeholder-neutral-400;
 }
 
 /* Dropzone Input */
 .input-dropzone {
-  @apply flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:hover:border-gray-500;
+  @apply flex flex-col items-center justify-center w-full h-64 border-2 border-neutral-300 border-dashed rounded-lg cursor-pointer bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:border-neutral-600 dark:hover:border-neutral-500;
 }
 
 /* Number Input */
 .input-number {
-  @apply text-center bg-gray-50 border border-gray-300 h-11 w-full text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+  @apply text-center bg-neutral-50 border border-neutral-300 h-11 w-full text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
 }
 
 /* Select Input */
 .input-select {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+  @apply bg-neutral-50 border border-neutral-300 text-neutral-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
 }
 
 /* Textarea Input */
 .input-textarea {
-  @apply block p-2.5 w-full text-sm bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+  @apply block p-2.5 w-full text-sm bg-neutral-50 rounded-lg border border-neutral-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
 }
 
 /* Checkbox Input */
 .input-checkbox {
-  @apply w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600;
+  @apply w-4 h-4 text-primary-600 bg-neutral-100 border-neutral-300 rounded-sm focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-neutral-700 dark:border-neutral-600;
 }
 
 /* Radio Input */
 .input-radio {
-  @apply w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600;
+  @apply w-4 h-4 text-primary-600 bg-neutral-100 border-neutral-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:bg-neutral-700 dark:border-neutral-600;
 }
 
 /* Toggle Input */
 .input-toggle {
-  @apply relative w-11 h-6 bg-gray-200 rounded-full dark:bg-gray-700;
+  @apply relative w-11 h-6 bg-neutral-200 rounded-full dark:bg-neutral-700;
 }
 
 /* Range Slider */
 .input-range {
-  @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700;
+  @apply w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer dark:bg-neutral-700;
 }
+
+@tailwind utilities;

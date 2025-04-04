@@ -8,13 +8,19 @@ import (
 
 func PublicRoutes(r *gin.Engine, handler *handlers.Handler) {
 	// Public routes
-	r.GET("/", handler.Root)
 	r.GET("/ping", handler.PingHandler)
 	r.GET("/empty", handler.Empty)
-	r.GET("/auth/login", handler.GetLogin)
+
 	r.GET("/auth/logout", handler.Logout)
+
+	// Get login page
+	r.GET("/auth/login", handler.GetLogin)
+
+	// Submit OTP to verify user and set cookie
 	r.POST("/auth/login", handler.Login)
-	r.GET("/auth/register", handler.GetRegister)
-	r.POST("/auth/register", handler.Register)
+
+	// Post phone number to trigger otp send
+	r.POST("/auth/otp", handler.TriggerOTP)
+
 	r.GET("/redirect", handler.Redirect)
 }

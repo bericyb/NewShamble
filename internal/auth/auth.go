@@ -14,14 +14,14 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("Authorization")
 		if tokenString == "" || err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+			c.Redirect(http.StatusFound, "/auth/login")
 			c.Abort()
 			return
 		}
 
 		parts := strings.Split(tokenString, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.HTML(http.StatusOK, "index.html", gin.H{})
+			c.Redirect(http.StatusFound, "/auth/login")
 			c.Abort()
 			return
 		}
@@ -44,7 +44,7 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.HTML(http.StatusOK, "index.html", gin.H{})
+			c.Redirect(http.StatusFound, "/auth/login")
 			c.Abort()
 			return
 		}

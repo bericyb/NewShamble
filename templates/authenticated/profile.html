@@ -1,0 +1,30 @@
+<div id="main">
+    <img src=""></img>
+    <input type="file" accept="image/*" id="profileImageInput" />
+
+    <button id="uploadProfileImageButton">Upload</button>
+
+    <form hx-patch="/profile" hx-target="#main" hx-swap="innerHTML">
+        <div>
+            <label for="usernameInput">Username:</label>
+            <input type="text" id="usernameInput" name="username" placeholder="{{ .Username }}" />
+
+            <label for="emailInput">Email:</label>
+            <input type="email" id="emailInput" name="email" placeholder="{{ .Email }}" />
+        </div>
+        <div>
+            <h2>Notifications</h2>
+            <label for="newTournaments">New Tournaments:</label>
+            <input type="checkbox" id="newTournaments" name="newTournaments" {{ if .NewTournaments }}checked{{ end }} />
+
+            <label for="friendsJoined">Friends Joined</label>
+            <input type="checkbox" id="friendsJoined" name="friendsJoined" {{ if .FriendsJoined }}checked{{ end }} />
+
+            <label for="tournamentStarting">Tournament Starting</label>
+            <input type="checkbox" id="tournamentStarting" name="tournamentStarting" {{ if .TournamentStarting
+                }}checked{{ end }} />
+        </div>
+        <button id="cancel" type="submit" class="btn btn-alternative" hx-get="/" hx-target="#main">Cancel</button>
+        <button id="saveProfileButton" type="submit" class="btn btn-default">Save Profile</button>
+    </form>
+</div>

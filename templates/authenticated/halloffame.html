@@ -1,0 +1,9 @@
+<div id="main">
+    {{ range .Tournaments }}
+    <div>
+        <h3>{{ .WinnerUsername }} won {{ .Prize }}</h3>
+        <p>{{ .StartDate }}</p>
+    </div>
+    {{ end }}
+    <button class="btn btn-default" hx-get="/" hx-target="#main">Back</button>
+</div>

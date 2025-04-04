@@ -16,11 +16,19 @@ func ProtectedRoutes(r *gin.Engine, handler *handlers.Handler) {
 		c.JSON(http.StatusOK, gin.H{"message": "You are authenticated"})
 	})
 
-	auth.GET("/dashboard", handler.GetDashboard)
-	auth.GET("/play", handler.GetPlay)
-	auth.GET("/decline-match", handler.DeclineMatch)
-	auth.GET("/queue/:mode", handler.GetQueue)
-	auth.DELETE("/queue/:mode/:playerID", handler.DeletePlayerFromQueue)
-	auth.POST("/queuestatus/:mode/:playerID", handler.GetQueueStatus)
-	auth.GET("/match/:gameID", handler.GetMatch)
+	// Root
+	auth.GET("/", handler.GetDashboard)
+
+	// Game handlers
+	auth.GET("/play/:tournamentID", handler.GetPlay)
+	auth.GET("/ws/play/:tournamentID", handler.WsHandler)
+	auth.POST("/leave/:tournamentID", handler.LeaveTournament)
+
+	// Profile handlers
+	auth.GET("/profile", handler.GetProfile)
+	auth.PATCH("/profile", handler.UpdateProfile)
+
+	// Hall of fame handlers
+	auth.GET("/halloffame", handler.GetPastTournaments)
+
 }

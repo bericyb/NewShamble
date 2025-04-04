@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT UNIQUE NOT NULL CHECK (email ~* '^.+@.+\..+$'),
+    email TEXT UNIQUE CHECK (email ~* '^.+@.+\..+$'),
     full_name TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()

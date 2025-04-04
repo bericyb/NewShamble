@@ -6,10 +6,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-co-op/gocron"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
@@ -18,28 +18,6 @@ var db *sql.DB
 
 func main() {
 	initDB()
-
-	go func() {
-		// Create a scheduler
-		scheduler := gocron.NewScheduler(time.UTC)
-
-		// Schedule functions every minute
-		scheduler.Every(1).Minute().Do(func() { executeDeleteFunction(db, "delete_old_quickplay_queue") })
-		scheduler.Every(1).Minute().Do(func() { executeDeleteFunction(db, "delete_old_ranked_queue") })
-		scheduler.Every(1).Minute().Do(func() { executeDeleteFunction(db, "delete_old_tournament_queue") })
-
-		// Start the scheduler
-		scheduler.StartAsync()
-		// Run matchmaking every 5 seconds using a ticker
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-
-		fmt.Println("Starting matchmaking loop...")
-
-		for range ticker.C {
-			runMatchmaking(db)
-		}
-	}()
 
 	r := gin.Default()
 
@@ -69,6 +47,19 @@ func initDB() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+
+	// Cron jobs to debug tournament behavior
+	go func() {
+		ticker := time.NewTicker(time.Second * 20)
+
+		for range ticker.C {
+			_, err := db.Exec("INSERT INTO tournaments (name, prize, prize_url, description) VALUES ($1, $2, $3, $4)", "Test", "A Rivian RT-1", "https://example.com", "A test tournament")
+			if err != nil {
+				slog.Error("Error creating test tournaments ", "error ", err.Error())
+			}
+			slog.Info("Created tournament")
+		}
+	}()
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)

@@ -1,0 +1,28 @@
+<body class="flex flex-col bg-neutral-900 mx-2 h-screen items-center justify-center" id="main">
+    <div class="sticky top-0 w-full backdrop-blur-sm">
+        <div class="flex items-center justify-between w-full">
+            <h3 class="py-3">
+                ROSHAMBLE
+            </h3>
+            <button class="relative right-10" hx-get="/profile" hx-target="#main">
+                <!-- Profile -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-user-round">
+                    <circle cx="12" cy="8" r="5" />
+                    <path d="M20 21a8 8 0 0 0-16 0" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div class="mx-4 flex items-center justify-center flex-col grow">
+        <h4>Enter Verification Code</h4>
+        <p class="error m-4">{{ .Error }}</p>
+        <p class="thin m-4">{{ .Message }}</p>
+        <form class="flex flex-col w-80" autocomplete="one-time-code" hx-post="/auth/login"
+            hx-vals='{"phone": "{{ .Phone }}"}' hx-target="#main">
+            <input class="input text-center !text-lg w-60 mb-12" name="otp" id="otp" type="number" />
+            <button class="btn btn-default grow-0" type="submit">Verify</button>
+        </form>
+    </div>
+</body>
